@@ -8,9 +8,9 @@
   <title>chat chat</title>
 </head>
 <body>
-  <button onclick="createChannel()">Create Channel/Room</button>
+  <button id="createChannel" onclick="createChannel()">Create Channel/Room</button>
   <div id="link"></div>
-  <div id="msgBody"></div>
-  <input type="text" id="sendMessage"/>
+  <table id="msgBody"></table>
+  <input type="text" id="sendMessage" onkeyup="handleChange()"/>
 </body>
 </html>

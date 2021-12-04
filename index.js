@@ -1,29 +1,48 @@
 let db;
 let currentRoomId;
 let myId = 0;
+const createRow = (id, msg) => {
+  return `
+    <tr>
+      <td>${id}</td>
+      <td>${msg}</td>
+    </tr>
+  `;
+};
+const updateMessageBody = (data) => {
+  document.getElementById('msgBody').innerHTML = '';
+  const reducer = (previousValue, id) => previousValue + createRow(id, data[id]);
+  document.getElementById('msgBody').innerHTML = Object.keys(data).reduce(reducer, '')
 
-document.getElementById('sendMessage').onchange(ev => {
-    const roomRef = db.collection('rooms').doc(`${currentRoomId}`);
-    console.log(ev.target.value);
-    roomRef.update({
-      [myId]: ev.target.value
-    });
-})
-
+};
+const handleChange = (ev) => {
+  const roomRef = db.collection('rooms').doc(`${currentRoomId}`);
+  const msg = document.getElementById('sendMessage').value;
+  roomRef.update({
+    [myId]: msg
+  });
+};
+const copyToClipboard = () => {
+  navigator.clipboard.writeText(document.location.href);
+};
 const createChannel = async () => {
   const roomRef = await db.collection('rooms').add({
     0: ''
   });
-  connection.setLocalDescription(offer)
   console.log('step 1: offer created and updated');
 
   const roomId = roomRef.id;
   currentRoomId = roomId;
-  document.getElementById('link').innerText = window.location.href + `?roomId=${roomId}`;
-
+  const shareUrl = window.location.href + `?roomId=${roomId}`;
+  window.history.replaceState(null, null, `?roomId=${roomId}`);
+  document.getElementById('link').innerHTML = `
+    ${shareUrl}
+    <button onclick="copyToClipboard()">Copy</button>
+  `;
+  document.getElementById('createChannel').style.display = 'none';
   roomRef.onSnapshot(async snapshot => {
     const data = snapshot.data();
-    console.log(data);
+    updateMessageBody(data);
   });
 }
 
@@ -34,12 +53,12 @@ const joinChannel =  async () => {
   const roomSnapshot = await roomRef.get();
   if (roomSnapshot.exists) {
     const data = roomSnapshot.data();
-    console.log(data);
+    updateMessageBody(data);
     myId = Object.keys(data).length;
   }
   roomRef.onSnapshot(async snapshot => {
     const data = snapshot.data();
-    console.log(data);
+    updateMessageBody(data);
   });
 }
 
@@ -62,7 +81,10 @@ const initDbConnection = () => {
 }
 
 (function () {
-  createConnection();
   initDbConnection();
   window.location.search.split('=')[1] && joinChannel();
 })();
+
+window.onload = function(){
+  window.location.search.split('=')[1] && (document.getElementById('createChannel').style.display = 'none');
+};
